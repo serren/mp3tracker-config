@@ -1,4 +1,3 @@
 logging:
   level:
     com.example.resourceprocessor: INFO
-    com.example.resourceprocessor.service.MetadataExtractorService: DEBUG
