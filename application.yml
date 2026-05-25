@@ -1,0 +1,14 @@
+eureka:
+  client:
+    registry-fetch-interval-seconds: 5
+  instance:
+    lease-renewal-interval-in-seconds: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,refresh
+  endpoint:
+    health:
+      show-details: never
