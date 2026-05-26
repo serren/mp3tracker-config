@@ -5,4 +5,4 @@ eureka:
 
 logging:
   level:
-    com.example: INFO
+    com.example: DEBUG
