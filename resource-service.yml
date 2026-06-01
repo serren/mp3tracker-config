@@ -17,3 +17,4 @@ retry:
 logging:
   level:
     com.example: INFO
+    com.example.resourceservice.client.StorageServiceClient: WARN
