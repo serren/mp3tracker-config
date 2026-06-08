@@ -1,60 +1,70 @@
-Git-backed configuration repository for the mp3tracker Config Server.                                                                                                     
-                                                                                                                                                                            
-  Spring Cloud Config Server reads YAML files from this repo and serves them to client services at startup and on demand via `POST /actuator/refresh`.                      
-                                                     
-  ## Files                               
+Git-backed configuration repository for the mp3tracker Config Server.
 
-  | File | Applies to |
-  |---|---|
-  | `application.yml` | All client services (shared defaults) |
-  | `resource-service.yml` | `resource-service` only |
-  | `song-service.yml` | `song-service` only |
+Spring Cloud Config Server reads YAML files from this repo and serves them to client services at startup and on demand via `POST /actuator/refresh`.
 
-  Per-service files are merged on top of `application.yml` — service-specific values take precedence.
+## Files
 
-  ## Property source priority
+| File | Applies to |
+|---|---|
+| `application.yml` | All client services (shared defaults) |
+| `resource-service.yml` | `resource-service` only |
+| `resource-processor.yml` | `resource-processor` only |
+| `song-service.yml` | `song-service` only |
 
-  OS environment variables  (highest)
-    └── Config Server (this repo)
-          └── Service own application.yml  (lowest)
+Per-service files are merged on top of `application.yml` — service-specific values take precedence.
 
-  Secrets (DB passwords, S3 keys, RabbitMQ credentials) are never stored here — they are injected via env vars in `compose.yaml`.
+## Property source priority
 
-  ## Contents
+OS environment variables  (highest)
+  └── Config Server (this repo)
+        └── Service own application.yml  (lowest)
 
-  ### `application.yml` — shared across all clients
+Secrets (DB passwords, S3 keys, RabbitMQ credentials) are never stored here — they are injected via env vars in `compose.yaml`.
 
-  - Eureka heartbeat / fetch intervals
-  - Actuator endpoints (`health`, `refresh` exposed)
+## Contents
 
-  ### `resource-service.yml`
+### `application.yml` — shared across all clients
 
-  - Eureka service URL
-  - RabbitMQ exchange, queue, and routing key names
-  - Retry policy (max attempts, backoff intervals)
-  - Log level for `com.example`
+- Eureka heartbeat / fetch intervals
+- Actuator endpoints exposed: `health`, `refresh`, `prometheus`
+- Micrometer metrics: per-application name tag, HTTP request percentile histograms
+- Distributed tracing: 100% sampling probability, Zipkin endpoint via `${ZIPKIN_URL}`
 
-  ### `song-service.yml`
+### `resource-service.yml`
 
-  - Eureka service URL
-  - Log level for `com.example`
+- Eureka service URL
+- RabbitMQ exchange, queue, and routing key names
+- RabbitMQ template and listener observation enabled (for tracing)
+- Retry policy (max attempts, backoff intervals)
+- Log level for `com.example` (INFO), `StorageServiceClient` (WARN)
 
-  ## Dynamic refresh
+### `resource-processor.yml`
 
-  To change a property at runtime without restarting:
+- RabbitMQ template and listener observation enabled (for tracing)
+- Log level for `com.example.resourceprocessor` (INFO)
 
-  ```bash
-  # 1. Edit the relevant YAML file, e.g.:
-  #    logging.level.com.example: DEBUG  (in resource-service.yml)
+### `song-service.yml`
 
-  # 2. Commit the change
-  git commit -am "update config"
+- Eureka service URL
+- Log level for `com.example` (DEBUG)
 
-  # 3. Trigger refresh on the target service
-  curl -X POST http://localhost:8081/actuator/refresh   # resource-service
-  curl -X POST http://localhost:8082/actuator/refresh   # song-service
+## Dynamic refresh
 
-  # Response: list of changed property keys
-  # ["logging.level.com.example"]
+To change a property at runtime without restarting:
 
-  Only @RefreshScope beans and externalized properties (e.g. logging.level.*) are re-applied without a restart.
+```bash
+# 1. Edit the relevant YAML file, e.g.:
+#    logging.level.com.example: DEBUG  (in resource-service.yml)
+
+# 2. Commit the change
+git commit -am "update config"
+
+# 3. Trigger refresh on the target service
+curl -X POST http://localhost:8081/actuator/refresh   # resource-service
+curl -X POST http://localhost:8082/actuator/refresh   # song-service
+
+# Response: list of changed property keys
+# ["logging.level.com.example"]
+```
+
+Only `@RefreshScope` beans and externalized properties (e.g. `logging.level.*`) are re-applied without a restart.
