@@ -14,6 +14,14 @@ retry:
   multiplier: 2.0
   max-delay: 10000
 
+spring:
+  rabbitmq:
+    template:
+      observation-enabled: true
+    listener:
+      simple:
+        observation-enabled: true
+
 logging:
   level:
     com.example: INFO
